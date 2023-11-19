@@ -31,7 +31,7 @@ typedef struct hb_matching_complete_desc_t
 
     hb_uid_t wuid;
 
-    hb_matching_user_handle_t const * const * users;
+    hb_matching_user_handle_t ** users;
     uint32_t users_count;
     
     const hb_json_handle_t * json_data;
