@@ -140,8 +140,10 @@ hb_result_t hb_economics_new_records( hb_economics_handle_t * _handle, const hb_
     return HB_SUCCESSFUL;
 }
 //////////////////////////////////////////////////////////////////////////
-static hb_result_t __hb_json_vocabulary( const char * _key, const hb_json_handle_t * _value, void * _ud )
+static hb_result_t __hb_json_vocabulary( hb_size_t _index, const hb_json_handle_t * _key, const hb_json_handle_t * _value, void * _ud )
 {
+    HB_UNUSED( _index );
+
     hb_economics_records_vocabulary_handle_t * handle = (hb_economics_records_vocabulary_handle_t *)_ud;
 
     if( hb_json_is_array( _value ) == HB_FALSE )
@@ -194,8 +196,6 @@ static hb_result_t __hb_json_vocabulary( const char * _key, const hb_json_handle
         {
             return HB_FAILURE;
         }
-
-        hb_json_destroy( jrecord );
 
         if( hb_vectorptr_set( records->vector_records, record_index, record ) == HB_FAILURE )
         {
@@ -253,8 +253,10 @@ static hb_result_t __hb_economics_cache_records_vocabulary( hb_economics_handle_
         return HB_FAILURE;
     }
 
+    uint8_t pool[HB_DATA_MAX_SIZE];
+
     hb_json_handle_t * json_data;
-    if( hb_json_create( data, datasize, &json_data ) == HB_FAILURE )
+    if( hb_json_create( data, datasize, pool, HB_DATA_MAX_SIZE, &json_data ) == HB_FAILURE )
     {
         return HB_FAILURE;
     }
@@ -276,8 +278,6 @@ static hb_result_t __hb_economics_cache_records_vocabulary( hb_economics_handle_
     {
         return HB_FAILURE;
     }
-
-    hb_json_destroy( json_data );
 
     if( hb_hashtable_emplace( _handle->ht_contracts, &_puid, sizeof( hb_uid_t ), new_records_handle ) == HB_FAILURE )
     {

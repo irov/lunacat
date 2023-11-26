@@ -62,8 +62,6 @@ hb_http_code_t hb_grid_request_command( hb_grid_request_handle_t * _args )
 
     hb_grid_process_unlock( _args->process, account_token.account_uid );
 
-    hb_json_destroy( json_method_args );
-
     if( result == HB_FAILURE )
     {
         return HTTP_BADREQUEST;

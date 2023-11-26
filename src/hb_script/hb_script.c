@@ -544,15 +544,16 @@ hb_result_t hb_script_api_call( hb_script_handle_t * _handle, const char * _api,
 //////////////////////////////////////////////////////////////////////////
 hb_result_t hb_script_api_call_data( hb_script_handle_t * _handle, const char * _api, const char * _method, const void * _data, hb_size_t _datasize, char * _result, hb_size_t _capacity, hb_size_t * _resultsize, hb_error_code_t * _code )
 {
+    uint8_t pool[HB_DATA_MAX_SIZE];
+
     hb_json_handle_t * json_data;
-    if( hb_json_create( _data, _datasize, &json_data ) == HB_FAILURE )
+    if( hb_json_create( _data, _datasize, pool, HB_DATA_MAX_SIZE, &json_data ) == HB_FAILURE )
     {
         return HB_FAILURE;
     }
 
     hb_result_t result = hb_script_api_call( _handle, _api, _method, json_data, _result, _capacity, _resultsize, _code );
 
-    hb_json_destroy( json_data );
-
     return result;
 }
+//////////////////////////////////////////////////////////////////////////

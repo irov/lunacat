@@ -133,8 +133,19 @@ static void __hb_grid_request( struct evhttp_request * _request, void * _ud )
         return;
     }
 
+    hb_data_t data;
+    hb_size_t data_size;
+    if( hb_http_get_request_data( _request, data, sizeof( data ), &data_size ) == HB_FAILURE )
+    {
+        __hb_grid_reply_badrequest( uri, _request, "invalid get request json data", output_buffer );
+
+        return;
+    }
+
     hb_json_handle_t * json_data_handle;
-    if( hb_http_get_request_json( _request, &json_data_handle ) == HB_FAILURE )
+
+    hb_data_t json_pool;
+    if( hb_json_mapping( data, data_size, json_pool, sizeof( json_pool ), &json_data_handle ) == HB_FAILURE )
     {
         __hb_grid_reply_badrequest( uri, _request, "bad json format", output_buffer );
 
@@ -185,8 +196,6 @@ static void __hb_grid_request( struct evhttp_request * _request, void * _ud )
 
         break;
     }
-
-    hb_json_destroy( json_data_handle );
 
     if( cmd_found == HB_FALSE )
     {
@@ -352,8 +361,10 @@ int main( int _argc, char * _argv[] )
 
     if( config_file != HB_NULLPTR )
     {
+        uint8_t data[HB_DATA_MAX_SIZE];
+
         hb_json_handle_t * json_handle;
-        if( hb_json_load( config_file, &json_handle ) == HB_FAILURE )
+        if( hb_json_load( config_file, data, HB_DATA_MAX_SIZE, &json_handle ) == HB_FAILURE )
         {
             HB_LOG_MESSAGE_CRITICAL( "grid", "config file '%s' wrong json"
                 , config_file
@@ -377,8 +388,6 @@ int main( int _argc, char * _argv[] )
         hb_json_copy_field_string_default( json_handle, "log_file", config->log_file, HB_MAX_PATH, config->log_file );
         hb_json_copy_field_string_default( json_handle, "log_uri", config->log_uri, HB_MAX_URI, config->log_uri );
         hb_json_get_field_uint16_default( json_handle, "log_port", &config->log_port, config->log_port );
-
-        hb_json_destroy( json_handle );
     }
 
     if( strcmp( config->log_file, "" ) != 0 )
