@@ -141,7 +141,7 @@ hb_result_t hb_script_json_dumps( lua_State * L, int32_t _index, char * _buffer,
     return HB_SUCCESSFUL;
 }
 //////////////////////////////////////////////////////////////////////////
-static hb_result_t __hb_json_fields( const char * _key, const hb_json_handle_t * _value, void * _ud );
+static hb_result_t __hb_json_fields( hb_size_t _index, const hb_json_handle_t * _key, const hb_json_handle_t * _value, void * _ud );
 //////////////////////////////////////////////////////////////////////////
 static hb_result_t __hb_json_arrays( hb_size_t _index, const hb_json_handle_t * _value, void * _ud )
 {
@@ -211,7 +211,7 @@ static hb_result_t __hb_json_arrays( hb_size_t _index, const hb_json_handle_t * 
     case e_hb_json_real:
         {
             double value;
-            if( hb_json_to_real( _value, &value ) == HB_FAILURE )
+            if( hb_json_to_double( _value, &value ) == HB_FAILURE )
             {
                 return HB_FAILURE;
             }
@@ -240,8 +240,10 @@ static hb_result_t __hb_json_arrays( hb_size_t _index, const hb_json_handle_t * 
     return HB_SUCCESSFUL;
 }
 //////////////////////////////////////////////////////////////////////////
-static hb_result_t __hb_json_fields( const char * _key, const hb_json_handle_t * _value, void * _ud )
+static hb_result_t __hb_json_fields( hb_size_t _index, const hb_json_handle_t * _key, const hb_json_handle_t * _value, void * _ud )
 {
+    HB_UNUSED( _index );
+
     lua_State * L = (lua_State *)_ud;
 
     hb_json_type_t json_value_type = hb_json_get_type( _value );
@@ -308,7 +310,7 @@ static hb_result_t __hb_json_fields( const char * _key, const hb_json_handle_t *
     case e_hb_json_real:
         {
             double value;
-            if( hb_json_to_real( _value, &value ) == HB_FAILURE )
+            if( hb_json_to_double( _value, &value ) == HB_FAILURE )
             {
                 return HB_FAILURE;
             }
@@ -332,7 +334,15 @@ static hb_result_t __hb_json_fields( const char * _key, const hb_json_handle_t *
         break;
     }
 
-    lua_setfield( L, -2, _key );
+    const char * key_str;
+    hb_size_t key_length;
+
+    if( hb_json_to_string( _key, &key_str, &key_length ) == HB_FAILURE )
+    {
+        return HB_FAILURE;
+    }
+
+    lua_setfield( L, -2, key_str );
 
     return HB_SUCCESSFUL;
 }
@@ -377,15 +387,15 @@ hb_result_t hb_script_json_loads_data( lua_State * L, const void * _data, hb_siz
         return HB_SUCCESSFUL;
     }
 
+    uint8_t pool[HB_DATA_MAX_SIZE];
+
     hb_json_handle_t * json_data;
-    if( hb_json_create( _data, _size, &json_data ) == HB_FAILURE )
+    if( hb_json_create( _data, _size, pool, HB_DATA_MAX_SIZE, &json_data ) == HB_FAILURE )
     {
         return HB_FAILURE;
     }
 
     hb_result_t result = hb_script_json_loads( L, json_data );
-
-    hb_json_destroy( json_data );
 
     return result;
 }
@@ -478,7 +488,7 @@ hb_result_t hb_script_json_load_fields( lua_State * L, const hb_json_handle_t * 
         case e_hb_json_real:
             {
                 double value;
-                if( hb_json_to_real( json_field, &value ) == HB_FAILURE )
+                if( hb_json_to_double( json_field, &value ) == HB_FAILURE )
                 {
                     return HB_FAILURE;
                 }
@@ -500,8 +510,6 @@ hb_result_t hb_script_json_load_fields( lua_State * L, const hb_json_handle_t * 
         default:
             break;
         }
-
-        hb_json_destroy( json_field );
     }
 
     return HB_SUCCESSFUL;
@@ -522,15 +530,15 @@ hb_result_t hb_script_json_load_fields_data( lua_State * L, const void * _data, 
         return HB_SUCCESSFUL;
     }
 
+    uint8_t pool[HB_DATA_MAX_SIZE];
+
     hb_json_handle_t * json_data;
-    if( hb_json_create( _data, _size, &json_data ) == HB_FAILURE )
+    if( hb_json_create( _data, _size, pool, HB_DATA_MAX_SIZE, &json_data ) == HB_FAILURE )
     {
         return HB_FAILURE;
     }
 
     hb_result_t result = hb_script_json_load_fields( L, json_data, _fields, _fieldcount );
-
-    hb_json_destroy( json_data );
 
     return result;
 }
@@ -544,7 +552,8 @@ hb_result_t hb_script_json_create( lua_State * L, int32_t _index, hb_json_handle
         return HB_FAILURE;
     }
 
-    if( hb_json_create( json_data, json_size, _json ) == HB_FAILURE )
+    uint8_t pool[HB_DATA_MAX_SIZE];
+    if( hb_json_create( json_data, json_size, pool, HB_DATA_MAX_SIZE, _json ) == HB_FAILURE )
     {
         return HB_FAILURE;
     }
@@ -633,12 +642,18 @@ hb_result_t hb_script_json_update_public_data( lua_State * L, int32_t _index, co
 
     if( hb_db_get_string_value( user_values, 0, &public_data_symbol, &public_data_symbol_length ) == HB_FAILURE )
     {
+        hb_db_destroy_values( user_values );
+
         return HB_FAILURE;
     }
 
+    uint8_t pool[HB_DATA_MAX_SIZE];
+
     hb_json_handle_t * json_data;
-    if( hb_json_create( public_data_symbol, public_data_symbol_length, &json_data ) == HB_FAILURE )
+    if( hb_json_create( public_data_symbol, public_data_symbol_length, pool, HB_DATA_MAX_SIZE, &json_data ) == HB_FAILURE )
     {
+        hb_db_destroy_values( user_values );
+
         return HB_FAILURE;
     }
 
@@ -650,14 +665,17 @@ hb_result_t hb_script_json_update_public_data( lua_State * L, int32_t _index, co
         return HB_FAILURE;
     }
 
-    if( hb_json_update( json_data, json_update ) == HB_FAILURE )
+    hb_json_handle_t * json_result;
+
+    uint8_t data[HB_DATA_MAX_SIZE];
+    if( hb_json_update( json_data, json_update, data, HB_DATA_MAX_SIZE, &json_result ) == HB_FAILURE )
     {
         return HB_FAILURE;
     }
 
-    char json_new_data[HB_DATA_MAX_SIZE];
-    hb_size_t json_new_data_size;
-    if( hb_json_dumps( json_data, json_new_data, HB_DATA_MAX_SIZE, &json_new_data_size ) == HB_FAILURE )
+    char json_result_data[HB_DATA_MAX_SIZE];
+    hb_size_t json_result_data_size;
+    if( hb_json_dumps( json_result, json_result_data, HB_DATA_MAX_SIZE, &json_result_data_size ) == HB_FAILURE )
     {
         return HB_FAILURE;
     }
@@ -669,7 +687,7 @@ hb_result_t hb_script_json_update_public_data( lua_State * L, int32_t _index, co
         return HB_FAILURE;
     }
 
-    hb_db_make_string_value( update_values, "public_data", HB_UNKNOWN_STRING_SIZE, json_new_data, json_new_data_size );
+    hb_db_make_string_value( update_values, "public_data", HB_UNKNOWN_STRING_SIZE, json_result_data, json_result_data_size );
     hb_db_inc_int32_value( update_values, "public_data_revision", HB_UNKNOWN_STRING_SIZE, 1 );
 
     if( hb_db_update_values( _collection, _uid, update_values ) == HB_FAILURE )

@@ -396,7 +396,9 @@ hb_result_t hb_matching_join( hb_matching_handle_t * _matching, const hb_db_clie
         desc.users = user_matchings;
         desc.users_count = room_matching_count;
 
-        if( hb_db_get_json_value( values, 0, &desc.json_data ) == HB_FAILURE )
+        uint8_t data[HB_DATA_MAX_SIZE];
+
+        if( hb_db_get_json_value( values, 0, data, HB_DATA_MAX_SIZE, &desc.json_data ) == HB_FAILURE )
         {
             return HB_FAILURE;
         }
@@ -404,8 +406,6 @@ hb_result_t hb_matching_join( hb_matching_handle_t * _matching, const hb_db_clie
         desc.ud = _ud;
 
         hb_result_t result = (*_complete)(&desc);
-
-        hb_json_destroy( desc.json_data );
 
         hb_db_destroy_values( values );
 

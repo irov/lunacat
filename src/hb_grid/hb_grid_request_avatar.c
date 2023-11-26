@@ -47,8 +47,6 @@ hb_http_code_t hb_grid_request_avatar( hb_grid_request_handle_t * _args )
 
     hb_grid_process_unlock( _args->process, user_token.user_uid );
 
-    hb_json_destroy( in_data.json_args );
-
     if( result == HB_FAILURE )
     {
         return HTTP_BADREQUEST;
