@@ -1,4 +1,5 @@
 #!/bin/bash
+# ## before run build 'builder' image
 
 terminalColorClear='\033[0m'
 terminalColorError='\033[1;31m'
