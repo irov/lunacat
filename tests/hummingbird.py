@@ -1,5 +1,7 @@
 from urllib import request
 from urllib.error import HTTPError
+from urllib.error import URLError
+from socket import timeout as SocketTimeoutError;
 import mimetypes
 import binascii
 import sys
@@ -58,6 +60,22 @@ def post(server, cmd, **params):
         response = request.urlopen(r, timeout=5, data=data)
     except HTTPError as e:
         print("post url '{0}' HTTPError: {1} [{2}]".format(url, e.reason, e.code))
+        
+        return None
+        pass
+    except URLError as error:
+        if isinstance(error.reason, timeout):
+            print('Timeout Error: URL [%s] data not retrieved because: %s'%(url, error))
+            pass
+        else:
+            print('URL Error: URL [%s] data not retrieved because: %s'%(url, error))
+            pass
+        
+        return None
+        pass
+    except SocketTimeoutError as error:
+        print('Socket Timeout Error: URL [%s] data not retrieved because: %s'%(url, error))
+        
         return None
         pass
     
