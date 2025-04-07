@@ -22,7 +22,7 @@ fast game server
     
 который мы сможем найти в папке
 
-`\solutions\solution_msvc16\Debug\hummingbird_win32.sln`
+`\solutions\solution_msvc16\Debug\lunacat_win32.sln`
 
 Удачи в сборке, и использованию!
 
