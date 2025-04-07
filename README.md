@@ -1,4 +1,4 @@
-# hummingbird
+# lunacat
 fast game server
 
 [![Build status](https://ci.appveyor.com/api/projects/status/mc9j9w88oh24n0ve?svg=true)](https://ci.appveyor.com/project/irov/hummingbird)
@@ -25,9 +25,6 @@ fast game server
 `\solutions\solution_msvc16\Debug\hummingbird_win32.sln`
 
 Удачи в сборке, и использованию!
-
-## Issues
-Библиотеки ядра (как glibc) часто ломают совместимость со старыми системами. По этому сервер нужно собирать ориентируясь на железо, на котором он будет работать (или на самом старом из возможных). Если билд планируется использовать на debian 10, но он был собран на debian 12, итоговый бинарник будет выдавать ошибку вроде `/usr/lib/libc.so.6: version 'GLIBC_2.33' not found`. Для сборок рекомендуется использовать docker или CICD сервисы, где можно указать систему, на которой собирать билд.
 
 ### MongoDB
 https://www.mongodb.com/download-center/community
